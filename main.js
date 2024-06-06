@@ -31,6 +31,11 @@ app.on('activate', () => {
   }
 });
 
+
+ipcMain.on('open-auth-window', () => {
+  createWindow();
+})
+
 // Создание нового окна при получении сообщения от рендерера
 ipcMain.on('open-register-window', () => {
   const registerWindow = new BrowserWindow({
@@ -47,7 +52,7 @@ ipcMain.on('open-register-window', () => {
   registerWindow.loadFile(path.join(__dirname, 'interface', 'register.html'));
 });
 
-ipcMain.on('open-account-window', () => {
+ipcMain.on('open-account-window', (data) => {
   const accountWindow = new BrowserWindow({
     width: 900,
     height: 600,
@@ -61,3 +66,4 @@ ipcMain.on('open-account-window', () => {
 
   accountWindow.loadFile(path.join(__dirname, 'interface', 'account.html'));
 });
+

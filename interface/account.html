@@ -6,14 +6,131 @@
 </head>
 <body>
   <div class="header">
-    <div class="header__wrapper">
-      <nav class="nav">
-        <button id="authButton">Войти</button>
-      </nav>
-    </div>
+    <nav class="nav">
+      <button id="closeProfile">Выйти из аккаунта</button>
+      <div class="nav__items">
+        <button id="create">Записаться на приём</button>
+        <button id="myApplications">Мои заявки</button>
+      </div>
+      <p class="profile__text">Вы авторизованы как <span id="username"></span></p>
+    </nav>
+    <main class="main">
+      <div class="main__wrapper">
+        <div class="popup__wrapper">
+          <div id="popup__create">
+            <div class="name">
+              <p class="item-text">Ваше имя:</p>
+              <input
+                  type="text"
+                  id="name"
+                  placeholder="ФИО"
+              />
+            </div>
+            <div class="service">
+              <p class="item-text">Услуга:</p>
+              <input
+                  type="text"
+                  id="service"
+                  placeholder="Услуга"
+              />
+            </div>
+            <div class="animal">
+              <p class="item-text">Питомец:</p>
+              <input
+                  type="text"
+                  id="animal"
+                  placeholder="Питомец"
+              />
+            </div>
+            <div class="date">
+              <p class="item-text">Желаемая дата приёма:</p>
+              <input
+                  type="text"
+                  id="date"
+                  placeholder="Пример: 24.01.2024-18:00"
+              />
+            </div>
+            <div class="buttons">
+              <button id="cancelButton">Отмена</button>
+              <button id="accessButton">Записаться</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
   </div>
 
   <script>
+    const popupCreate = document.getElementById('popup__create')
+    const createPopupView = () => {
+      if (getComputedStyle(popupCreate).display == 'none') {
+        popupCreate.style.display = "flex"
+        document.getElementById('name').value = "";
+        document.getElementById('service').value = "";
+        document.getElementById('animal').value = "";
+        document.getElementById('date').value = "";
+      }
+      else if (getComputedStyle(popupCreate).display == 'flex') {
+        popupCreate.style.display = "none"
+      }
+    }
+    create.addEventListener('click', createPopupView)
+
+
+    const account = localStorage.getItem('userLogin');
+    document.getElementById('username').textContent = account
+
+    document.getElementById('closeProfile').addEventListener('click', () => {
+      window.close()
+      window.electron.send('open-auth-window');
+    });
+
+
+    const sendApplication = async (e) => {
+      e.preventDefault();
+      try {
+        const name = document.getElementById('name').value;
+        const service = document.getElementById('service').value;
+        const animal = document.getElementById('animal').value;
+        const date = document.getElementById('date').value;
+
+        if (!name || !service || !animal || !date) {
+          alert('Некоторые поля не заполнены!');
+          return;
+        }
+
+        const response = await fetch('http://localhost:3000/send-application', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ account, name, service, animal, date }),
+        });
+
+        const data = await response.json();
+
+        if (data.success === "repeat") {
+          alert('Пользователь уже существует.');
+          throw new Error(data.message);
+        }
+        if (!data.success) {
+          throw new Error(data.message);
+        }
+        else {
+          // Очистка полей ввода
+          createPopupView()
+          alert(`Заявка на приём под номером ${1} создана`)
+        }
+
+      } catch (error) {
+        console.error(error.message);
+      }
+    };
+
+
+    document.getElementById('accessButton').addEventListener('click', sendApplication)
+    document.getElementById('cancelButton').addEventListener('click', createPopupView)
+
   </script>
 </body>
 </html>

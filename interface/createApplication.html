@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Запись на приём</title>
+  <link rel="stylesheet" href="../styles/createApplication.css">
+</head>
+<body>
+  <button class="close" onclick="window.close();">Назад</button>
+  <div class="header">
+    <div class="header__wrapper">
+      <h1>Регистрация</h1>
+      <p>Придумайте Логин:</p>
+      <input
+          type="text"
+          id="login"
+          placeholder="Логин"
+      />
+
+      <p>Придумайте Пароль:</p>
+      <input
+          type="text"
+          id="password"
+          placeholder="Пароль"
+      />
+      <button id="registerButton">Зарегистрироваться</button>
+    </div>
+  </div>
+
+  <script> 
+    const handleRegister = async (e) => {
+      e.preventDefault();
+      try {
+        const login = document.getElementById('login').value;
+        const password = document.getElementById('password').value;
+
+        if (!login || !password) {
+          alert('Пожалуйста, заполните все поля.');
+          return;
+        }
+
+        const response = await fetch('http://localhost:3000/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ login, password }),
+        });
+
+        const data = await response.json();
+
+        if (data.success === "repeat") {
+          alert('Пользователь уже существует.');
+          throw new Error(data.message);
+        }
+        if (!data.success) {
+          throw new Error(data.message);
+        }
+        else {
+          // Очистка полей ввода
+          document.getElementById('login').value = '';
+          document.getElementById('password').value = '';
+          window.close()
+        }
+
+      } catch (error) {
+        console.error(error.message);
+      }
+    };
+
+    document.getElementById('registerButton').addEventListener('click', handleRegister)
+
+  </script>
+
+</body>
+</html>

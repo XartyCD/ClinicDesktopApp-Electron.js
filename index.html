@@ -26,6 +26,7 @@
 
       <div class="footer">
         <p>Нет аккаунта?</p> <button id="registerButton">Создать</button>
+        <button id="deleteProfile">Удалить аккаунт</button>
       </div>
     </div>
   </div>
@@ -58,7 +59,8 @@
           document.getElementById('password').value = '';
         }
         else if (data.success && data.user) {
-          window.electron.send('open-account-window')
+          window.electron.send('open-account-window') 
+          localStorage.setItem('userLogin', login); // Небезопасно (в браузере через консоль можно изменить значение)
 
           window.close()
         }
@@ -66,6 +68,34 @@
         console.error(error.message);
       }
     };
+
+    document.getElementById('deleteProfile').addEventListener('click', async () => {
+      const login = document.getElementById('login').value;
+      const confirmDeletion = confirm(`Вы уверены, что хотите удалить аккаунт ${login}?`);
+        try {
+          const response = await fetch('http://localhost:3000/delete', {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ login }),
+          });
+          alert(login)
+
+          const result = await response.json();
+          if (result.success) {
+            alert('Аккаунт успешно удален.');
+            window.electron.send('open-auth-window');
+            window.close();
+          } else {
+            alert(`Ошибка: ${result.message}`);
+          }
+        } catch (error) {
+          console.error('Ошибка при удалении аккаунта:', error);
+        }
+      }
+    );
+
 
     document.getElementById('authButton').addEventListener('click', handleLogin)
 

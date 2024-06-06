@@ -64,6 +64,43 @@ app.post('/login', (req, res) => {
 });
 
 
+app.delete('/delete', (req, res) => {
+  const { login } = req.body;
+  const query = 'DELETE FROM authed WHERE login = ?';
+  db.query(query, [login], (error, results, fields) => {
+    if (error) {
+      console.error('Ошибка при выполнении запроса:', error);
+      res.status(500).json({ success: false });
+    } else if (results.affectedRows === 0) {
+      // Обработка случая, когда пользователь не найден в базе данных
+      res.status(200).json({ success: false, message: 'Пользователь не найден' });
+    } else {
+      res.status(200).json({ success: true, message: 'Пользователь успешно удален' });
+    }
+  });
+});
+
+
+app.post('/send-application', (req, res) => {
+  const { account, name, service, animal, date } = req.body;
+
+    const query = 'INSERT INTO Application (login, Client, Service, Animal, date) VALUES (?,?,?,?,?)';
+    db.query(query, [account, name, service, animal, date], (error, results, fields) => {
+      if (error) {
+        console.error('Ошибка при выполнении запроса:', error);
+        res.status(500).json({ success: false });
+        return;
+      }
+
+        res.status(200).json({ success: true });
+      });
+});
+
+
+
+
+
+
 app.listen(3000, () => {
     console.log(`Сервер успешно запущен на порту ${port}`);
 });
