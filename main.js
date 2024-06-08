@@ -52,11 +52,11 @@ ipcMain.on('open-register-window', () => {
   registerWindow.loadFile(path.join(__dirname, 'interface', 'register.html'));
 });
 
-ipcMain.on('open-account-window', (data) => {
+ipcMain.on('open-account-window', () => {
   const accountWindow = new BrowserWindow({
     width: 900,
     height: 600,
-    modal: true, // Делаем новое окно модальным
+    modal: false, // Делаем новое окно модальным
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -66,4 +66,21 @@ ipcMain.on('open-account-window', (data) => {
 
   accountWindow.loadFile(path.join(__dirname, 'interface', 'account.html'));
 });
+
+ipcMain.on('open-edit-window', () => {
+  const editWindow = new BrowserWindow({
+    width: 600,
+    height: 500,
+    modal: true, // Делаем новое окно модальным
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true
+    }
+  });
+
+  editWindow.loadFile(path.join(__dirname, 'interface', 'changeApplication.html'));
+});
+
+
 

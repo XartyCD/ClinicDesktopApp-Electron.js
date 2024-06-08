@@ -1,19 +1,110 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Редактировать заявку</title>
-  <link rel="stylesheet" href="styles/main.css">
+  <title>Редактирование заявки</title>
+  <link rel="stylesheet" href="../styles/changeApplication.css">
 </head>
 <body>
-  <h1>Hello, Electron!</h1>
-  <button id="myButton" style="background-color: rgb(77, 77, 196); color: chocolate; cursor: pointer;">Сохранить</button>
+  <button class="close" onclick="window.close();">Назад</button>
+  <div class="header">
+    <div class="header__wrapper">
+      <h1>Редактирование заявки №<span id="applicationNumber"></span></h1>
+      <p>Имя клиента:</p>
+      <input
+          type="text"
+          id="name"
+          placeholder="Имя клиента"
+      />
 
-  <script>
-    const { ipcRenderer } = require('electron');
+      <p>Услуга:</p>
+      <input
+          type="text"
+          id="service"
+          placeholder="Услуга"
+      />
 
-    document.getElementById('myButton').addEventListener('click', () => {
-      ipcRenderer.send('button-clicked', 'Button was clicked!');
-    });
+      <p>Животное:</p>
+      <input
+          type="text"
+          id="animal"
+          placeholder="Животное"
+      />
+      <p>Телефон:</p>
+      <input
+          type="text"
+          id="contact"
+          placeholder="+7-(900)-000-00-00"
+      />
+      <p>Дата приема:</p>
+      <input
+          type="text"
+          id="date"
+          placeholder="Дата приема"
+      />
+
+      <button id="saveButton">Сохранить изменения</button>
+    </div>
+  </div>
+
+  <script> 
+    const login = localStorage.getItem('userLogin');
+    const number = localStorage.getItem('editAppNumber');
+
+    document.getElementById('applicationNumber').textContent = number
+    // Функция обработки сохранения изменений заявки 
+    const handleSave = async (e) => {
+      e.preventDefault();
+      try {
+        // Получение значений полей
+        const name = document.getElementById('name').value;
+        const service = document.getElementById('service').value;
+        const animal = document.getElementById('animal').value;
+        const contact = document.getElementById('contact').value;
+        const date = document.getElementById('date').value;
+
+        // Создание объекта с заполненными полями
+        const updatedFields = {};
+        if (name.trim() !== '') updatedFields.name = name;
+        if (service.trim() !== '') updatedFields.service = service;
+        if (animal.trim() !== '') updatedFields.animal = animal;
+        if (contact.trim() !== '') updatedFields.contact = contact;
+        if (date.trim() !== '') updatedFields.date = date;
+
+        // Отправка изменений на сервер
+        const response = await fetch('http://localhost:3000/edit-application', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ login, number, ...updatedFields }), // Отправка только заполненных полей
+        });
+
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error(data.message);
+        } else {
+          // Очистка полей ввода и закрытие окна
+          document.getElementById('name').value = '';
+          document.getElementById('service').value = '';
+          document.getElementById('animal').value = '';
+          document.getElementById('contact').value = '';
+          document.getElementById('date').value = '';
+          localStorage.removeItem("editAppNumber");
+          window.close();
+
+          alert('Заявка успешно изменена!');
+          window.localStorage.setItem('applicationUpdated', 'true');
+        }
+      } catch (error) {
+        console.error(error.message);
+      }
+    };
+    // Добавление обработчика на кнопку сохранения изменений
+    document.getElementById('saveButton').addEventListener('click', handleSave)
+
+
   </script>
+
 </body>
 </html>

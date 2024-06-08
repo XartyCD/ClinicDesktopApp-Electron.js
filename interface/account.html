@@ -11,8 +11,10 @@
       <div class="nav__items">
         <button id="create">Записаться на приём</button>
         <button id="myApplications">Мои заявки</button>
+        <button id="historyButton">История посещений</button>
       </div>
       <p class="profile__text">Вы авторизованы как <span id="username"></span></p>
+      <button id="deleteBut">Удалить пользователя</button>
     </nav>
     <main class="main">
       <div class="main__wrapper">
@@ -42,6 +44,14 @@
                   placeholder="Питомец"
               />
             </div>
+            <div class="contact">
+              <p class="item-text">Телефон:</p>
+              <input
+                  type="text"
+                  id="contact"
+                  placeholder="+7-(900)-000-00-00"
+              />
+            </div>
             <div class="date">
               <p class="item-text">Желаемая дата приёма:</p>
               <input
@@ -56,11 +66,88 @@
             </div>
           </div>
         </div>
+        <div id="applicationsContainer">
+          <h2>Мои заявки</h2>
+          <ul id="applicationsList"></ul>
+        </div>
+        <div id="historyContainer" style="display: none;">
+          <h2>История посещений</h2>
+          <ul id="historyList"></ul>
+        </div>
       </div>
     </main>
   </div>
 
   <script>
+    const fetchHistory = async () => {
+      const login = localStorage.getItem('userLogin');
+
+      try {
+        const response = await fetch(`http://localhost:3000/history?login=${login}`);
+        const data = await response.json();
+
+        if (data.success) {
+          const historyList = document.getElementById('historyList');
+          historyList.innerHTML = '';
+
+          if (data.history.length === 0) {
+            const noHistoryMessage = document.createElement('p');
+            noHistoryMessage.textContent = 'История посещений не найдена!';
+            historyList.appendChild(noHistoryMessage);
+          } else {
+            data.history.forEach(entry => {
+              const historyItem = document.createElement('li');
+              historyItem.textContent = `Пользователь: ${entry.login}, Дата входа: ${entry.login_time}`;
+              historyList.appendChild(historyItem);
+            });
+          }
+          document.getElementById('applicationsContainer').style.display = 'none';
+          document.getElementById('historyContainer').style.display = 'block';
+        } else {
+          console.error('Ошибка при получении истории посещений:', data.message);
+        }
+      } catch (error) {
+        console.error('Ошибка при получении истории посещений:', error);
+      }
+    };
+
+    document.getElementById('historyButton').addEventListener('click', fetchHistory);
+
+
+
+    const login = localStorage.getItem("userLogin")
+    const deleteUser = async () => {
+      const login = localStorage.getItem("userLogin")
+      try {
+        const response = await fetch('http://localhost:3000/delete-user', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ login }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          window.close()
+          window.electron.send('open-auth-window');
+        } else {
+          alert(`Ошибка при удалении: ${data.message}`);
+        }
+      } catch (error) {
+        console.error('Ошибка при удалении пользователя:', error);
+      }
+    };
+
+    const confirmDeleteUser = () => {
+      const confirmed = confirm(`Вы точно хотите удалить свой аккаунт (${login}) и все свои заявки?`);
+      if (confirmed) {
+        deleteUser();
+      }
+    };
+
+
     const popupCreate = document.getElementById('popup__create')
     const createPopupView = () => {
       if (getComputedStyle(popupCreate).display == 'none') {
@@ -68,6 +155,7 @@
         document.getElementById('name').value = "";
         document.getElementById('service').value = "";
         document.getElementById('animal').value = "";
+        document.getElementById('contact').value = "";
         document.getElementById('date').value = "";
       }
       else if (getComputedStyle(popupCreate).display == 'flex') {
@@ -92,9 +180,10 @@
         const name = document.getElementById('name').value;
         const service = document.getElementById('service').value;
         const animal = document.getElementById('animal').value;
+        const contact = document.getElementById('contact').value;
         const date = document.getElementById('date').value;
 
-        if (!name || !service || !animal || !date) {
+        if (!name || !service || !animal || !contact || !date) {
           alert('Некоторые поля не заполнены!');
           return;
         }
@@ -104,7 +193,7 @@
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ account, name, service, animal, date }),
+          body: JSON.stringify({ account, name, service, animal, contact, date }),
         });
 
         const data = await response.json();
@@ -119,7 +208,8 @@
         else {
           // Очистка полей ввода
           createPopupView()
-          alert(`Заявка на приём под номером ${1} создана`)
+          alert(`Заявка на приём под номером ${data.number} создана`)
+          fetchApplications();
         }
 
       } catch (error) {
@@ -127,9 +217,108 @@
       }
     };
 
+    const fetchApplications = async () => {
+      const login = localStorage.getItem('userLogin');
+      try {
+        const response = await fetch(`http://localhost:3000/applications?login=${login}`);
+        const data = await response.json();
+
+        if (data.success) {
+          const applicationsList = document.getElementById('applicationsList');
+          applicationsList.innerHTML = '';
+
+          if (data.applications.length === 0) {
+            const noApplicationsMessage = document.createElement('p');
+            noApplicationsMessage.textContent = 'Заявок не найдено!';
+            applicationsList.appendChild(noApplicationsMessage);
+          }
+          else {
+            data.applications.forEach(app => {
+              const applicationBlock = document.createElement('div');
+              applicationBlock.classList.add('application-block');
+
+              const applicationNumber = document.createElement('p');
+              applicationNumber.textContent = `Заявка ${app.application_number}`;
+              applicationBlock.appendChild(applicationNumber);
+
+              const applicationInfo = document.createElement('p');
+              applicationInfo.textContent = `Придёт: ${app.Client} Услуга: ${app.Service} Питомец: (${app.Animal}) Связь: ${app.contact} Запись на ${app.date}`;
+              applicationBlock.appendChild(applicationInfo);
+
+
+              const editButton = document.createElement('button');
+              editButton.textContent = 'Редактировать';
+              editButton.classList.add('edit-button');
+              editButton.addEventListener('click', () => {
+                localStorage.setItem("editAppNumber", app.application_number)
+                //localStorage.removeItem("editAppNumber")
+                window.electron.send('open-edit-window')
+              });
+              applicationBlock.appendChild(editButton);
+
+              const deleteButton = document.createElement('button');
+              deleteButton.textContent = 'Удалить';
+              deleteButton.classList.add('delete-button');
+              deleteButton.addEventListener('click', () => deleteApplication(app.application_number));
+              applicationBlock.appendChild(deleteButton);
+
+              applicationsList.appendChild(applicationBlock);
+            });
+          }
+        } else {
+          console.error('Ошибка при получении заявок:', data.message);
+        }
+      } catch (error) {
+        console.error('Ошибка при получении заявок:', error);
+      }
+    };
+    
+
+
+    const deleteApplication = async (applicationNumber) => {
+      const login = localStorage.getItem('userLogin');
+
+      try {
+        const response = await fetch('http://localhost:3000/delete-application', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ login, applicationNumber }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert('Заявка успешно удалена');
+          fetchApplications();
+        } else {
+          alert(`Ошибка при удалении заявки: ${data.message}`);
+        }
+      } catch (error) {
+        console.error('Ошибка при удалении заявки:', error);
+      }
+    };
+
+    // Добавьте обработчик для кнопки "Мои заявки"
+    document.getElementById('myApplications').addEventListener('click', fetchApplications);
+
+    // Загрузка заявок при загрузке страницы
+    document.addEventListener('DOMContentLoaded', fetchApplications);
 
     document.getElementById('accessButton').addEventListener('click', sendApplication)
     document.getElementById('cancelButton').addEventListener('click', createPopupView)
+    document.getElementById('deleteBut').addEventListener('click', confirmDeleteUser)
+
+
+
+
+    window.addEventListener('storage', (event) => {
+      if (event.key === 'applicationUpdated') {
+        fetchApplications();
+        window.localStorage.removeItem('applicationUpdated');
+      }
+    });
 
   </script>
 </body>
