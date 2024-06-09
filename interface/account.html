@@ -113,11 +113,8 @@
 
     document.getElementById('historyButton').addEventListener('click', fetchHistory);
 
-
-
-    const login = localStorage.getItem("userLogin")
+    const login = localStorage.getItem("userLogin");
     const deleteUser = async () => {
-      const login = localStorage.getItem("userLogin")
       try {
         const response = await fetch('http://localhost:3000/delete-user', {
           method: 'DELETE',
@@ -130,7 +127,7 @@
         const data = await response.json();
 
         if (data.success) {
-          window.close()
+          window.close();
           window.electron.send('open-auth-window');
         } else {
           alert(`Ошибка при удалении: ${data.message}`);
@@ -140,39 +137,29 @@
       }
     };
 
-    const confirmDeleteUser = () => {
-      const confirmed = confirm(`Вы точно хотите удалить свой аккаунт (${login}) и все свои заявки?`);
-      if (confirmed) {
-        deleteUser();
-      }
-    };
-
-
-    const popupCreate = document.getElementById('popup__create')
+    const popupCreate = document.getElementById('popup__create');
     const createPopupView = () => {
       if (getComputedStyle(popupCreate).display == 'none') {
-        popupCreate.style.display = "flex"
+        popupCreate.style.display = "flex";
+      }
+      else if (getComputedStyle(popupCreate).display == 'flex') {
+        popupCreate.style.display = "none";
         document.getElementById('name').value = "";
         document.getElementById('service').value = "";
         document.getElementById('animal').value = "";
         document.getElementById('contact').value = "";
         document.getElementById('date').value = "";
       }
-      else if (getComputedStyle(popupCreate).display == 'flex') {
-        popupCreate.style.display = "none"
-      }
     }
-    create.addEventListener('click', createPopupView)
-
+    create.addEventListener('click', createPopupView);
 
     const account = localStorage.getItem('userLogin');
-    document.getElementById('username').textContent = account
+    document.getElementById('username').textContent = account;
 
     document.getElementById('closeProfile').addEventListener('click', () => {
-      window.close()
+      window.close();
       window.electron.send('open-auth-window');
     });
-
 
     const sendApplication = async (e) => {
       e.preventDefault();
@@ -197,18 +184,13 @@
         });
 
         const data = await response.json();
-
-        if (data.success === "repeat") {
-          alert('Пользователь уже существует.');
-          throw new Error(data.message);
-        }
         if (!data.success) {
           throw new Error(data.message);
         }
         else {
           // Очистка полей ввода
-          createPopupView()
-          alert(`Заявка на приём под номером ${data.number} создана`)
+          createPopupView();
+
           fetchApplications();
         }
 
@@ -245,14 +227,12 @@
               applicationInfo.textContent = `Придёт: ${app.Client} Услуга: ${app.Service} Питомец: (${app.Animal}) Связь: ${app.contact} Запись на ${app.date}`;
               applicationBlock.appendChild(applicationInfo);
 
-
               const editButton = document.createElement('button');
               editButton.textContent = 'Редактировать';
               editButton.classList.add('edit-button');
               editButton.addEventListener('click', () => {
-                localStorage.setItem("editAppNumber", app.application_number)
-                //localStorage.removeItem("editAppNumber")
-                window.electron.send('open-edit-window')
+                localStorage.setItem("editAppNumber", app.application_number);
+                window.electron.send('open-edit-window');
               });
               applicationBlock.appendChild(editButton);
 
@@ -265,6 +245,10 @@
               applicationsList.appendChild(applicationBlock);
             });
           }
+
+          // Скрываем контейнер истории посещений и показываем контейнер заявок
+          document.getElementById('historyContainer').style.display = 'none';
+          document.getElementById('applicationsContainer').style.display = 'block';
         } else {
           console.error('Ошибка при получении заявок:', data.message);
         }
@@ -272,8 +256,6 @@
         console.error('Ошибка при получении заявок:', error);
       }
     };
-    
-
 
     const deleteApplication = async (applicationNumber) => {
       const login = localStorage.getItem('userLogin');
@@ -306,12 +288,9 @@
     // Загрузка заявок при загрузке страницы
     document.addEventListener('DOMContentLoaded', fetchApplications);
 
-    document.getElementById('accessButton').addEventListener('click', sendApplication)
-    document.getElementById('cancelButton').addEventListener('click', createPopupView)
-    document.getElementById('deleteBut').addEventListener('click', confirmDeleteUser)
-
-
-
+    document.getElementById('accessButton').addEventListener('click', sendApplication);
+    document.getElementById('cancelButton').addEventListener('click', createPopupView);
+    document.getElementById('deleteBut').addEventListener('click', deleteUser);
 
     window.addEventListener('storage', (event) => {
       if (event.key === 'applicationUpdated') {
@@ -319,7 +298,6 @@
         window.localStorage.removeItem('applicationUpdated');
       }
     });
-
   </script>
 </body>
 </html>

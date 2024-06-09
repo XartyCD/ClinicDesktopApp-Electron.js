@@ -97,6 +97,16 @@ app.delete('/delete-user', (req, res) => {
       return;
     }
 
+
+    const deleteUserHistory = 'DELETE FROM history WHERE login = ?';
+    db.query(deleteUserHistory, [login], (error, results) => {
+      if (error) {
+        console.error('Ошибка при удалении посещений пользователя:', error);
+        res.status(500).json({ success: false, message: 'Ошибка при удалении посещений пользователя' });
+        return;
+      }})
+
+
     // Удалить пользователя
     const deleteUserQuery = 'DELETE FROM authed WHERE login = ?';
     db.query(deleteUserQuery, [login], (error, results) => {

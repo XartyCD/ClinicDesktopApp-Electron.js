@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu } = require('electron');
 const path = require('path');
 
 let mainWindow;
@@ -15,6 +15,7 @@ function createWindow() {
   });
 
   mainWindow.loadFile('index.html');
+  Menu.setApplicationMenu(null);
 }
 
 app.on('ready', createWindow);
